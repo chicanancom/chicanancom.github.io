@@ -40,6 +40,3 @@ A beautiful, mathematical particle Christmas tree built with Three.js and Vite.
 
 ## 🌐 Deployment
 This project is configured to automatically deploy to GitHub Pages via GitHub Actions when you push to the `main` branch.
-
-## 👤 Author
-Developed by [Ikeapeacful](https://www.facebook.com/tgjlBnShC3WeISkUK6NHpABWh.username).
