@@ -1,13 +1,18 @@
 :root {
-    --bg-color: #050505;
+    --bg-color: #030305;
     --text-color: #ffffff;
-    --accent-color: #00f2ff;
-    --secondary-accent: #7000ff;
-    --glass-bg: rgba(255, 255, 255, 0.05);
-    --glass-border: rgba(255, 255, 255, 0.1);
-    --card-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    --accent-color: #00ffd5;
+    /* Legendary Cyan */
+    --secondary-accent: #ff007a;
+    /* Legendary Magenta */
+    --tertiary-accent: #7d00ff;
+    /* Legendary Purple */
+    --glass-bg: rgba(255, 255, 255, 0.03);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --card-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
     --font-main: 'Inter', sans-serif;
     --font-heading: 'Outfit', sans-serif;
+    --glow-color: rgba(0, 255, 213, 0.5);
 }
 
 * {
@@ -127,11 +132,12 @@ nav {
     font-size: 4.5rem;
     font-weight: 800;
     margin-bottom: 1.5rem;
-    background: linear-gradient(135deg, var(--accent-color), var(--secondary-accent));
+    background: linear-gradient(135deg, var(--accent-color), var(--secondary-accent), var(--tertiary-accent));
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
     line-height: 1.1;
+    filter: drop-shadow(0 0 10px rgba(0, 255, 213, 0.2));
 }
 
 .hero p {
@@ -153,14 +159,15 @@ nav {
 }
 
 .btn.primary {
-    background: linear-gradient(135deg, var(--accent-color), var(--secondary-accent));
+    background: linear-gradient(135deg, var(--accent-color), var(--tertiary-accent));
     color: #000;
-    box-shadow: 0 10px 30px rgba(0, 242, 255, 0.3);
+    box-shadow: 0 10px 25px rgba(0, 255, 213, 0.25);
+    border: none;
 }
 
 .btn.primary:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 20px 40px rgba(0, 242, 255, 0.5);
+    transform: translateY(-5px) scale(1.05);
+    box-shadow: 0 20px 40px rgba(0, 255, 213, 0.4), 0 0 15px var(--accent-color);
 }
 
 .btn.secondary {
@@ -197,7 +204,7 @@ nav {
 .project-card:hover {
     transform: translateY(-10px);
     border-color: var(--accent-color);
-    box-shadow: var(--card-shadow);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.7), 0 0 20px rgba(0, 255, 213, 0.15);
 }
 
 .project-image {
