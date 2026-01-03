@@ -4,34 +4,43 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout 🛎️
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node ⚙️
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'npm'
 
-      - name: Install dependencies 📦
+      - name: Install dependencies
         run: npm install
 
-      - name: Build Sub-projects 🏗️
+      - name: Build Sub-projects
         run: npm run build
 
-      - name: Build Root Portfolio 🏠
+      - name: Build Root Portfolio
         run: npx vite build
 
-      - name: Prepare Deployment Structure 📂
+      - name: Prepare Deployment Structure
         run: |
           # Create subdirectory structure in root dist to match links
           mkdir -p dist/src/WebGL/heart/dist
@@ -43,11 +52,21 @@ jobs:
           cp -r src/WebGL/tree/dist/* dist/src/WebGL/tree/dist/
           cp -r src/WebGL/music-terrain/dist/* dist/src/WebGL/music-terrain/dist/
           
-          # Copy assets folder to dist
-          cp -r assets dist/ || true
+          # Add .nojekyll to bypass Jekyll processing
+          touch dist/.nojekyll
 
-      - name: Deploy 🚀
-        uses: JamesIves/github-pages-deploy-action@v4
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          folder: dist
-          branch: gh-pages
+          path: ./dist
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
