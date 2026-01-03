@@ -1,0 +1,53 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v4
+
+      - name: Setup Node ⚙️
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies 📦
+        run: npm install
+
+      - name: Build Sub-projects 🏗️
+        run: npm run build
+
+      - name: Build Root Portfolio 🏠
+        run: npx vite build
+
+      - name: Prepare Deployment Structure 📂
+        run: |
+          # Create subdirectory structure in root dist to match links
+          mkdir -p dist/src/WebGL/heart/dist
+          mkdir -p dist/src/WebGL/tree/dist
+          mkdir -p dist/src/WebGL/music-terrain/dist
+          
+          # Copy each project's dist into the main dist
+          cp -r src/WebGL/heart/dist/* dist/src/WebGL/heart/dist/
+          cp -r src/WebGL/tree/dist/* dist/src/WebGL/tree/dist/
+          cp -r src/WebGL/music-terrain/dist/* dist/src/WebGL/music-terrain/dist/
+          
+          # Copy assets folder to dist
+          cp -r assets dist/ || true
+
+      - name: Deploy 🚀
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: dist
+          branch: gh-pages
