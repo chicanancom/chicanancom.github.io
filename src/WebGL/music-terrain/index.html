@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Music Terrain Visualizer</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+
+<body>
+  <div class="ui">
+    <h1>Music Terrain</h1>
+    <p>Music Terrain Visualizer • Three.js</p>
+    <p>By <a href="https://github.com/chicanancom" target="_blank">Chicanancom</a></p>
+  </div>
+  <div id="app"></div>
+  <div id="track-info" class="hidden">
+    Track: <a id="track-link" href="#" target="_blank"></a>
+  </div>
+  <div id="overlay">
+    <div class="content">
+      <h1>Music Terrain</h1>
+      <p>Click to start the experience</p>
+      <p class="sub">Drag & Drop an MP3 file to play your own music</p>
+      <input type="file" id="file-input" accept="audio/*" style="display:none" />
+      <button id="start-btn">Upload Music</button>
+      <button id="default-btn">Play Default</button>
+    </div>
+  </div>
+  <script type="module" src="/main.js"></script>
+</body>
+
+</html>

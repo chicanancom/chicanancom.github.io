@@ -1,0 +1,28 @@
+# Common node ignore
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Editor folders
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# TypeScript
+*.tsbuildinfo
+
+# Build artifacts
+src/WebGL/*/dist/
+src/WebGL/*/node_modules/
+package-lock.json
+!/package.json
+!/package-lock.json
