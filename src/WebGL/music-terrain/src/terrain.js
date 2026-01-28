@@ -83,11 +83,11 @@ export function updateTerrain(frequencyData, deltaTime) {
 
     if (frequencyData) {
         const freqRange = 0.4;
-        const halfCols = (cols - 1) / 2;
 
         for (let x = 0; x < cols; x++) {
-            const distFromCenter = Math.abs(x - halfCols) / halfCols;
-            const freqIndex = 1 + Math.floor(Math.pow(distFromCenter, 0.8) * (frequencyData.length * freqRange - 1));
+            // Linear mapping from left to right (Bass on left, Mids/Highs on right)
+            const ratio = x / (cols - 1);
+            const freqIndex = 1 + Math.floor(ratio * (frequencyData.length * freqRange - 2));
 
             const val = frequencyData[freqIndex] || 0;
             newRow[x] = Math.pow(val / 255.0, 1.1);
