@@ -14,6 +14,7 @@ const CONFIG = {
     color2: new THREE.Color(0xff55aa), // Bright pink
     color3: new THREE.Color(0xffffff), // White highlights
     snowParticleCount: 30000,
+    flowerParticleCount: 80000,
 };
 
 // --- Scene Setup ---
@@ -198,6 +199,138 @@ function createHeartParticles() {
     return new THREE.Points(geometry, material);
 }
 
+function createFlowerParticles() {
+    const geometry = new THREE.BufferGeometry();
+    const count = CONFIG.flowerParticleCount;
+    const positions = new Float32Array(count * 3);
+    const colors = new Float32Array(count * 3);
+    const sizes = new Float32Array(count);
+    const phases = new Float32Array(count);
+    const intensities = new Float32Array(count);
+
+    const centerColor = new THREE.Color(0xffaa00); // Yellow/Orange center
+    const petalColor = new THREE.Color(0x33bbee);  // Cyan/Blue petals (or choose pink?) Let's use yellow and cyan for contrast with the heart
+    const highlightColor = new THREE.Color(0xffffff);
+
+    for (let i = 0; i < count; i++) {
+        phases[i] = Math.random() * Math.PI * 2;
+        intensities[i] = 1.0;
+
+        let x, y, z;
+        let col = new THREE.Color();
+        const rand = Math.random();
+
+        // 20% in center disc, 80% petals
+        if (Math.random() < 0.25) {
+            // center
+            const u = Math.random() * Math.PI * 2;
+            const v = Math.random() * Math.PI;
+            const rad = Math.random() * 3 + 0.5;
+            x = rad * Math.cos(u) * Math.sin(v);
+            y = rad * Math.sin(u) * Math.sin(v);
+            z = rad * Math.cos(v) * 1.5; // extrude slightly in Z
+
+            if (rand > 0.95) col = highlightColor;
+            else col.copy(centerColor).offsetHSL(Math.random() * 0.1 - 0.05, 0, Math.random() * 0.2 - 0.1);
+
+            intensities[i] = 1.5;
+        } else {
+            // 5 Petals
+            const p = 5;
+            const t = Math.random() * Math.PI * 2;
+            // Rose curve shape mapping: |sin(p/2 * t)| 
+            // but we want rounded petals
+            const ang = (t % (Math.PI * 2 / p)) / (Math.PI * 2 / p); // 0 to 1 inside petal
+            const petalLen = Math.sin(ang * Math.PI);
+            const rMax = 3 + 12 * petalLen;
+            const rMin = 2;
+            const r = rMin + Math.pow(Math.random(), 0.5) * (rMax - rMin); // more density towards edge
+
+            x = r * Math.cos(t);
+            y = r * Math.sin(t);
+            const taper = 1 - (r - rMin) / (rMax - rMin + 0.1);
+            z = (Math.random() - 0.5) * 4 * taper;
+
+            if (rand > 0.95) {
+                col = highlightColor;
+                intensities[i] = 2.5;
+            } else {
+                col.copy(petalColor).offsetHSL(Math.random() * 0.05 - 0.025, 0, Math.random() * 0.2 - 0.1);
+                intensities[i] = 1.0;
+            }
+        }
+
+        // Scale and shift (match heart's roughly)
+        const scale = CONFIG.heartScale * 0.05 * 1.2;
+        positions[i * 3 + 0] = x * scale;
+        positions[i * 3 + 1] = y * scale + 8; // Offset upwards to match heart
+        positions[i * 3 + 2] = z * scale;
+
+        // Add some noise
+        const noise = (Math.random() - 0.5) * 0.3;
+        positions[i * 3 + 0] += noise;
+        positions[i * 3 + 1] += noise;
+        positions[i * 3 + 2] += noise;
+
+        colors[i * 3 + 0] = col.r;
+        colors[i * 3 + 1] = col.g;
+        colors[i * 3 + 2] = col.b;
+
+        sizes[i] = (Math.random() * 0.08 + 0.04) * (2.0 + Math.random() * 2.0);
+        if (intensities[i] > 1.0) sizes[i] *= 1.5;
+    }
+
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+    geometry.setAttribute('phase', new THREE.BufferAttribute(phases, 1));
+    geometry.setAttribute('intensity', new THREE.BufferAttribute(intensities, 1));
+
+    // Re-use heart shader
+    const material = new THREE.ShaderMaterial({
+        uniforms: {
+            uTime: { value: 0 },
+            uTexture: { value: createParticleTexture() }
+        },
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        vertexShader: `
+            uniform float uTime;
+            attribute float size;
+            attribute float phase;
+            attribute float intensity;
+            attribute vec3 color;
+            varying vec3 vColor;
+            varying float vOpacity;
+            varying float vIntensity;
+
+            void main() {
+                vColor = color;
+                vIntensity = intensity;
+                float twinkle = sin(uTime * 3.0 + phase) * 0.5 + 0.5;
+                vOpacity = 0.4 + 0.6 * twinkle;
+                vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                gl_PointSize = size * (300.0 / -mvPosition.z) * (0.8 + 0.4 * twinkle);
+                gl_Position = projectionMatrix * mvPosition;
+            }
+        `,
+        fragmentShader: `
+            uniform sampler2D uTexture;
+            varying vec3 vColor;
+            varying float vOpacity;
+            varying float vIntensity;
+            void main() {
+                vec4 texColor = texture2D(uTexture, gl_PointCoord);
+                if (texColor.a < 0.2) discard;
+                gl_FragColor = vec4(vColor * vIntensity, vOpacity * texColor.a);
+            }
+        `
+    });
+
+    return new THREE.Points(geometry, material);
+}
+
 function createSnowParticles() {
     const geometry = new THREE.BufferGeometry();
     const count = CONFIG.snowParticleCount;
@@ -247,7 +380,12 @@ function createSnowParticles() {
 }
 
 let tree = createHeartParticles();
+tree.position.set(-5, 0, 0); // Di chuyển tim sang trái
 scene.add(tree);
+
+let flower = createFlowerParticles();
+flower.position.set(6, 0, 0); // Đặt hoa sát lại gần
+scene.add(flower);
 
 
 
@@ -295,8 +433,13 @@ function animate() {
     if (tree.material instanceof THREE.ShaderMaterial) {
         tree.material.uniforms.uTime.value = time;
     }
+    if (flower.material instanceof THREE.ShaderMaterial) {
+        flower.material.uniforms.uTime.value = time;
+    }
 
     tree.rotation.y += CONFIG.rotationSpeed;
+    flower.rotation.y += CONFIG.rotationSpeed * 0.8;
+
 
     // Pulsing lights
     pointLight1.intensity = 2 + Math.sin(time * 2) * 0.5;
