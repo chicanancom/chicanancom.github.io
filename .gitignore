@@ -21,7 +21,7 @@ Thumbs.db
 *.tsbuildinfo
 
 # Build artifacts
-src/WebGL/*/dist/
+# src/WebGL/*/dist/
 src/WebGL/*/node_modules/
 package-lock.json
 !/package.json
