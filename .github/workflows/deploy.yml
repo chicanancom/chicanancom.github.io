@@ -46,11 +46,13 @@ jobs:
           mkdir -p dist/src/WebGL/heart/dist
           mkdir -p dist/src/WebGL/tree/dist
           mkdir -p dist/src/WebGL/music-terrain/dist
+          mkdir -p dist/src/WebGL/cloud/dist
           
           # Copy each project's dist into the main dist
           cp -r src/WebGL/heart/dist/* dist/src/WebGL/heart/dist/
           cp -r src/WebGL/tree/dist/* dist/src/WebGL/tree/dist/
           cp -r src/WebGL/music-terrain/dist/* dist/src/WebGL/music-terrain/dist/
+          cp -r src/WebGL/cloud/dist/* dist/src/WebGL/cloud/dist/
           
           # Add .nojekyll to bypass Jekyll processing
           touch dist/.nojekyll
