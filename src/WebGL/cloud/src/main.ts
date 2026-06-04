@@ -8,8 +8,8 @@ const scene = new THREE.Scene();
 const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 10);
 camera.position.z = 1;
 
-const renderer = new THREE.WebGLRenderer({ 
-    antialias: true, 
+const renderer = new THREE.WebGLRenderer({
+    antialias: true,
     alpha: true,
     powerPreference: "high-performance"
 });
@@ -48,7 +48,6 @@ vec2 bsMo = vec2(0);
 
 vec2 disp(float t){ return vec2(sin(t*0.22)*1.2, cos(t*0.175)*1.2)*2.0; }
 
-// RAINBOW HELPER
 vec3 palette(float t) {
     vec3 a = vec3(0.5, 0.5, 0.5);
     vec3 b = vec3(0.5, 0.5, 0.5);
@@ -70,7 +69,7 @@ vec2 map(vec3 p)
     float dspAmp = 0.1 + prm1*0.2;
     for(int i = 0; i < 5; i++)
     {
-		p += sin(p.zxy*0.75*trk + iTime*trk*.8)*dspAmp;
+        p += sin(p.zxy*0.75*trk + iTime*trk*.8)*dspAmp;
         d -= abs(dot(cos(p), sin(p.yzx))*z);
         z *= 0.57;
         trk *= 1.4;
@@ -82,40 +81,35 @@ vec2 map(vec3 p)
 
 vec4 render( in vec3 ro, in vec3 rd, float time )
 {
-	vec4 rez = vec4(0);
-	float t = 1.5;
-	float fogT = 0.;
-	for(int i=0; i<130; i++)
-	{
-		if(rez.a > 0.99)break;
-
-		vec3 pos = ro + t*rd;
+    vec4 rez = vec4(0);
+    float t = 1.5;
+    float fogT = 0.;
+    for(int i=0; i<130; i++)
+    {
+        if(rez.a > 0.99)break;
+        vec3 pos = ro + t*rd;
         vec2 mpv = map(pos);
-		float den = clamp(mpv.x-0.3,0.,1.)*1.12;
-		float dn = clamp((mpv.x + 2.),0.,3.);
-        
-		vec4 col = vec4(0);
+        float den = clamp(mpv.x-0.3,0.,1.)*1.12;
+        float dn = clamp((mpv.x + 2.),0.,3.);
+        vec4 col = vec4(0);
         if (mpv.x > 0.6)
         {
-            // NEW: DYNAMIC RAINBOW COLORS
             float colorPhase = pos.z * 0.1 + iTime * 0.2;
             vec3 cloudCol = palette(colorPhase);
-            
             col = vec4(cloudCol * (sin(vec3(5.0, 0.4, 0.2) + mpv.y * 0.1 + sin(pos.z * 0.4) * 0.5 + 1.8) * 0.5 + 0.5), 0.08);
             col *= den*den*den;
-			col.rgb *= linstep(4.,-2.5, mpv.x)*2.3;
+            col.rgb *= linstep(4.,-2.5, mpv.x)*2.3;
             float dif =  clamp((den - map(pos+0.8).x)/9.0, 0.001, 1.0 );
             dif += clamp((den - map(pos+0.35).x)/2.5, 0.001, 1.0 );
             col.xyz *= den*(vec3(0.005, 0.045, 0.075) + 1.5 * vec3(0.033, 0.07, 0.03) * dif);
         }
-		
-		float fogC = exp(t*0.22 - 2.5);
-		col.rgba += vec4(palette(iTime * 0.05) * 0.05, 0.1) * clamp(fogC - fogT, 0.0, 1.0);
-		fogT = fogC;
-		rez = rez + col*(1. - rez.a);
-		t += clamp(0.5 - dn*dn*.05, 0.09, 0.3);
-	}
-	return clamp(rez, 0.0, 1.0);
+        float fogC = exp(t*0.22 - 2.5);
+        col.rgba += vec4(palette(iTime * 0.05) * 0.05, 0.1) * clamp(fogC - fogT, 0.0, 1.0);
+        fogT = fogC;
+        rez = rez + col*(1. - rez.a);
+        t += clamp(0.5 - dn*dn*.05, 0.09, 0.3);
+    }
+    return clamp(rez, 0.0, 1.0);
 }
 
 float getsat(vec3 c)
@@ -141,44 +135,31 @@ float hash(vec2 p) {
 }
 
 void main()
-{	
-	vec2 q = gl_FragCoord.xy/iResolution.xy;
+{
+    vec2 q = gl_FragCoord.xy/iResolution.xy;
     vec2 p = (gl_FragCoord.xy - 0.5*iResolution.xy)/iResolution.y;
     bsMo = (iMouse.xy - 0.5*iResolution.xy)/iResolution.y;
-    
     float time = iTime * 0.12;
     vec3 ro = vec3(0,0,time * 3.0);
     ro += vec3(sin(iTime*0.4)*0.6, sin(iTime*0.25)*0.3, 0);
-        
     float dspAmp = .85;
     ro.xy += disp(ro.z)*dspAmp;
     float tgtDst = 3.5;
-    
     vec3 target = normalize(ro - vec3(disp(ro.z + tgtDst)*dspAmp, ro.z + tgtDst));
     ro.x -= bsMo.x * 2.5;
     ro.y -= bsMo.y * 1.5;
-
     vec3 rightdir = normalize(cross(target, vec3(0,1,0)));
     vec3 updir = normalize(cross(rightdir, target));
-	vec3 rd = normalize((p.x*rightdir + p.y*updir)*1.3 - target);
+    vec3 rd = normalize((p.x*rightdir + p.y*updir)*1.3 - target);
     rd.xy *= rot(-disp(ro.z + 3.5).x*0.12 + bsMo.x * 0.6);
-    
     prm1 = smoothstep(-0.4, 0.4, sin(iTime*0.15));
-	vec4 scn = render(ro, rd, time * 3.0);
-		
+    vec4 scn = render(ro, rd, time * 3.0);
     vec3 col = scn.rgb;
-    // Dynamic Blend
     col = iLerp(col.bgr, col.rgb, clamp(1.0 - prm1, 0.05, 1.0));
-    
     col = pow(col, vec3(0.55, 0.65, 0.6)) * 1.1;
-
-    // Vignette
     col *= pow( 16.0*q.x*q.y*(1.0-q.x)*(1.0-q.y), 0.12)*0.8+0.2;
-    
-    // Film Grain
     col += (hash(q + iTime) - 0.5) * 0.02;
-
-	gl_FragColor = vec4( col, 1.0 );
+    gl_FragColor = vec4( col, 1.0 );
 }
 `;
 
@@ -215,14 +196,14 @@ window.addEventListener('mousemove', (e) => {
 
 function animate() {
     requestAnimationFrame(animate);
-    
+
     curX += (tgtX - curX) * 0.06;
     curY += (tgtY - curY) * 0.06;
-    
+
     uniforms.iMouse.value.x = curX;
     uniforms.iMouse.value.y = curY;
     uniforms.iTime.value = performance.now() / 1000;
-    
+
     composer.render();
 }
 

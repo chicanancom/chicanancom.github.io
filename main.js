@@ -7,7 +7,8 @@ let scene, camera, renderer, starPoints, backStars, cloudMesh, cloudMaterial;
 function initBackground() {
     const canvas = document.getElementById('bg-canvas');
     renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-    renderer.setPixelRatio(window.devicePixelRatio);
+    // Cap pixel ratio at 1.5 for high performance on Retina/High-DPI screens
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     renderer.setSize(window.innerWidth, window.innerHeight);
 
     scene = new THREE.Scene();
@@ -141,7 +142,8 @@ function initBackground() {
             float fbm(vec2 p) {
                 float v = 0.0;
                 float a = 0.5;
-                for(int i=0; i<6; i++){
+                // Reduced octaves from 6 to 4 for major performance gains on mobile/GPU
+                for(int i=0; i<4; i++){
                     v += a * smoothNoise(p);
                     p *= 2.0;
                     a *= 0.5;
@@ -185,6 +187,10 @@ function animate() {
         return;
     }
     requestAnimationFrame(animate);
+
+    // Skip rendering if tab is hidden/backgrounded to save CPU/GPU cycles
+    if (document.hidden) return;
+
     const time = performance.now() * 0.001;
     const scrollY = window.scrollY;
 
@@ -277,12 +283,16 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    LegendaryCursor.init({
-        lineSize: 0.15,
-        opacityDecrement: 0.55,
-        speedExpFactor: 0.8,
-        lineExpFactor: 0.6,
-        sparklesCount: 65,
-        maxOpacity: 0.99,
-    });
+    // Only initialize the cursor effect on non-touch devices, and with optimized settings
+    const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    if (!isTouch) {
+        LegendaryCursor.init({
+            lineSize: 0.15,
+            opacityDecrement: 0.55,
+            speedExpFactor: 0.8,
+            lineExpFactor: 0.6,
+            sparklesCount: 20, // Reduced from 65 to avoid lagging browser rendering thread
+            maxOpacity: 0.99,
+        });
+    }
 });
