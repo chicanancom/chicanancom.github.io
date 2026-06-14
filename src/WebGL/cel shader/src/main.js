@@ -387,7 +387,7 @@ function loadModel(url) {
     },
     (xhr) => {
       if (xhr.lengthComputable) {
-        const percent = Math.round((xhr.loaded / xhr.total) * 100);
+        const percent = Math.min(99, Math.round((xhr.loaded / xhr.total) * 100));
         progressBarEl.style.width = `${percent}%`;
         progressTextEl.innerText = `${percent}%`;
 
