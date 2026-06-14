@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GLB Viewer</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script type="module" crossorigin src="./assets/index-Cpc5yNo1.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-Bax0yYVQ.css">
+</head>
+
+<body>
+  <!-- Canvas Container -->
+  <div id="canvas-container"></div>
+
+  <!-- Loading Overlay -->
+  <div id="loading-overlay">
+    <div class="loader-content">
+      <div class="spinner-container">
+        <div class="spinner"></div>
+        <div class="spinner-inner"></div>
+      </div>
+      <h2 class="loader-title">ĐANG TẢI MÔ HÌNH 3D</h2>
+      <p class="loader-subtitle" id="loader-status">Đang kết nối và tải file backup1.glb...</p>
+      <div class="progress-bar-container">
+        <div class="progress-bar" id="progress-bar"></div>
+      </div>
+      <div class="progress-percentage" id="progress-text">0%</div>
+    </div>
+  </div>
+
+  <!-- Main Floating Dashboard -->
+  <div id="dashboard">
+    <!-- Header -->
+    <header class="dashboard-header">
+      <div class="logo-area">
+        <i data-lucide="box" class="icon-accent"></i>
+        <div>
+          <h1>3D GLB Viewer</h1>
+          <span class="file-name">backup1.glb</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Scrollable Control Panel Area -->
+    <div class="dashboard-body">
+      <!-- Section: Load Model -->
+      <section class="control-section">
+        <h3 class="section-title">
+          <i data-lucide="upload-cloud"></i>
+          Tải mô hình mới
+        </h3>
+        <div class="control-group">
+          <button class="btn-control" id="btn-upload">
+            <i data-lucide="file-plus"></i>
+            <span>Chọn file GLB từ máy</span>
+          </button>
+          <input type="file" id="file-input" accept=".glb,.gltf" style="display: none;">
+          <p class="loader-subtitle" style="margin-top: 5px; margin-bottom: 0; font-size: 0.75rem; text-align: center;">
+            Hoặc kéo thả file GLB trực tiếp vào màn hình
+          </p>
+        </div>
+      </section>
+
+      <!-- Section: Model Control -->
+      <section class="control-section">
+        <h3 class="section-title">
+          <i data-lucide="sliders"></i>
+          Điều khiển mô hình
+        </h3>
+        <div class="control-group">
+          <div class="control-row">
+            <label for="toggle-rotate">Tự động xoay</label>
+            <label class="switch">
+              <input type="checkbox" id="toggle-rotate">
+              <span class="slider-round"></span>
+            </label>
+          </div>
+          <div class="control-row-col">
+            <div class="slider-label-row">
+              <label for="rotate-speed">Tốc độ xoay</label>
+              <span id="rotate-speed-val">1.0x</span>
+            </div>
+            <input type="range" id="rotate-speed" min="0.1" max="5.0" step="0.1" value="1.0" class="styled-range">
+          </div>
+          <div class="control-row">
+            <label for="toggle-wireframe">Khung dây (Wireframe)</label>
+            <label class="switch">
+              <input type="checkbox" id="toggle-wireframe">
+              <span class="slider-round"></span>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section: Camera Views -->
+      <section class="control-section">
+        <h3 class="section-title">
+          <i data-lucide="video"></i>
+          Góc nhìn Camera
+        </h3>
+        <div class="control-group">
+          <div class="camera-grid">
+            <button class="btn-preset" id="btn-view-front-face">
+              <i data-lucide="smile"></i>
+              <span>Chính diện mặt</span>
+            </button>
+            <button class="btn-preset" id="btn-view-reset">
+              <i data-lucide="refresh-cw"></i>
+              <span>Mặc định</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section: Lighting & Environment -->
+      <section class="control-section">
+        <h3 class="section-title">
+          <i data-lucide="sun"></i>
+          Ánh sáng & Môi trường
+        </h3>
+        <div class="control-group">
+          <div class="control-row">
+            <label for="toggle-grid">Hiện lưới sàn (Grid)</label>
+            <label class="switch">
+              <input type="checkbox" id="toggle-grid">
+              <span class="slider-round"></span>
+            </label>
+          </div>
+          <div class="control-row">
+            <label for="toggle-shadows">Bóng đổ (Shadows)</label>
+            <label class="switch">
+              <input type="checkbox" id="toggle-shadows" checked>
+              <span class="slider-round"></span>
+            </label>
+          </div>
+          <div class="control-row-col">
+            <div class="slider-label-row">
+              <label for="light-intensity">Cường độ sáng</label>
+              <span id="light-intensity-val">1.0</span>
+            </div>
+            <input type="range" id="light-intensity" min="0.1" max="3.0" step="0.1" value="1.0" class="styled-range">
+          </div>
+          <div class="control-row-col">
+            <div class="slider-label-row">
+              <label for="light-azimuth">Góc ngang ánh sáng</label>
+              <span id="light-azimuth-val">45°</span>
+            </div>
+            <input type="range" id="light-azimuth" min="0" max="360" step="1" value="45" class="styled-range">
+          </div>
+          <div class="control-row-col">
+            <div class="slider-label-row">
+              <label for="light-elevation">Độ cao ánh sáng</label>
+              <span id="light-elevation-val">60°</span>
+            </div>
+            <input type="range" id="light-elevation" min="5" max="89" step="1" value="60" class="styled-range">
+          </div>
+
+          <div class="control-row-col">
+            <label>Màu nền</label>
+            <div class="color-presets">
+              <button class="color-preset active" data-color="#e5e7eb" style="background: #e5e7eb;"
+                title="Light Studio"></button>
+              <button class="color-preset" data-color="#ffffff" style="background: #ffffff;"
+                title="White Studio"></button>
+              <button class="color-preset" data-color="#1a1c23" style="background: #1a1c23;"
+                title="Dark Studio"></button>
+              <button class="color-preset" data-color="#0a0b10" style="background: #0a0b10;"
+                title="Deep Space"></button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- Section: Animations (Shown dynamically if exists) -->
+      <section class="control-section" id="animation-section" style="display: none;">
+        <h3 class="section-title">
+          <i data-lucide="play-circle"></i>
+          Hoạt cảnh (Animations)
+        </h3>
+        <div class="control-group">
+          <div class="control-row-col">
+            <label for="animation-select">Chọn chuyển động</label>
+            <div class="custom-select-wrapper">
+              <select id="animation-select" class="styled-select">
+                <!-- Loaded dynamically -->
+              </select>
+            </div>
+          </div>
+          <div class="animation-controls">
+            <button class="btn-control" id="btn-play-pause">
+              <i data-lucide="pause" id="play-pause-icon"></i>
+              <span id="play-pause-text">Tạm dừng</span>
+            </button>
+            <div class="control-row-col" style="margin-top: 10px; width: 100%;">
+              <div class="slider-label-row">
+                <label for="animation-speed">Tốc độ chạy</label>
+                <span id="animation-speed-val">1.0x</span>
+              </div>
+              <input type="range" id="animation-speed" min="0.1" max="2.0" step="0.1" value="1.0" class="styled-range">
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section: Statistics -->
+      <section class="control-section">
+        <h3 class="section-title">
+          <i data-lucide="bar-chart-2"></i>
+          Thông số kỹ thuật
+        </h3>
+        <div class="stats-panel">
+          <div class="stat-item">
+            <span class="stat-label">Số đa giác (Triangles):</span>
+            <span class="stat-value" id="stat-triangles">Đang tính...</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Số đỉnh (Vertices):</span>
+            <span class="stat-value" id="stat-vertices">Đang tính...</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Kích thước (Bounds):</span>
+            <span class="stat-value" id="stat-bounds">Đang tính...</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Dung lượng file:</span>
+            <span class="stat-value">11.2 MB</span>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Scene Hierarchy Panel -->
+  <div id="hierarchy-panel">
+    <div class="hierarchy-resize-handle" id="hierarchy-resize"></div>
+    <div class="hierarchy-header">
+      <div class="hierarchy-title">
+        <i data-lucide="layers"></i>
+        <span>Scene Hierarchy</span>
+      </div>
+      <button id="hierarchy-toggle" title="Thu gọn/Mở rộng">
+        <i data-lucide="chevron-right" id="hierarchy-chevron"></i>
+      </button>
+    </div>
+    <div id="hierarchy-body">
+      <div id="hierarchy-tree"></div>
+    </div>
+  </div>
+
+  <!-- Help Overlay / Hotkeys Info -->
+  <div id="help-btn" title="Hướng dẫn điều khiển">
+    <i data-lucide="help-circle"></i>
+  </div>
+
+  <div id="help-modal" class="modal-hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Tương tác 3D</h3>
+        <button class="close-modal"><i data-lucide="x"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="help-row">
+          <div class="help-key"><i data-lucide="mouse-pointer"></i> Chuột trái</div>
+          <div class="help-desc">Giữ và kéo để xoay góc nhìn camera.</div>
+        </div>
+        <div class="help-row">
+          <div class="help-key"><i data-lucide="mouse-pointer"></i> Cuộn chuột</div>
+          <div class="help-desc">Thu phóng (Zoom in / Zoom out) mô hình.</div>
+        </div>
+        <div class="help-row">
+          <div class="help-key"><i data-lucide="mouse-pointer"></i> Chuột phải</div>
+          <div class="help-desc">Giữ và kéo để di chuyển camera (Pan).</div>
+        </div>
+        <div class="help-row">
+          <div class="help-key"><i data-lucide="tablet"></i> Cảm ứng</div>
+          <div class="help-desc">1 ngón để xoay, 2 ngón để phóng to/thu nhỏ hoặc di chuyển.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+
+</html>
