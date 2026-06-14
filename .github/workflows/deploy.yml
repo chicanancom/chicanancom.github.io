@@ -20,15 +20,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Pages
-        uses: actions/configure-pages@v4
+        uses: actions/configure-pages@v5
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 24
           cache: 'npm'
 
       - name: Install dependencies
@@ -47,12 +47,14 @@ jobs:
           mkdir -p dist/src/WebGL/tree/dist
           mkdir -p dist/src/WebGL/music-terrain/dist
           mkdir -p dist/src/WebGL/cloud/dist
+          mkdir -p "dist/src/WebGL/cel shader/dist"
           
           # Copy each project's dist into the main dist
           cp -r src/WebGL/heart/dist/* dist/src/WebGL/heart/dist/
           cp -r src/WebGL/tree/dist/* dist/src/WebGL/tree/dist/
           cp -r src/WebGL/music-terrain/dist/* dist/src/WebGL/music-terrain/dist/
           cp -r src/WebGL/cloud/dist/* dist/src/WebGL/cloud/dist/
+          cp -r "src/WebGL/cel shader/dist/"* "dist/src/WebGL/cel shader/dist/"
           
           # Add .nojekyll to bypass Jekyll processing
           touch dist/.nojekyll
@@ -71,4 +73,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
