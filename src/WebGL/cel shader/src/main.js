@@ -31,6 +31,9 @@ let targetCameraPos = new THREE.Vector3();
 let targetControlsTarget = new THREE.Vector3();
 let isAnimatingCamera = false;
 
+let customModelUrl = null;
+let customModelName = "";
+
 function init() {
   const container = document.getElementById('canvas-container');
 
@@ -81,7 +84,7 @@ function init() {
 
   setupUI();
 
-  loadModel('./backup1.glb');
+  loadModel('./autosave2_10632_autosave.glb', false);
 
   animate();
 }
@@ -254,15 +257,55 @@ function createOutline(mesh) {
   mesh.add(outlineMesh);
 }
 
-function loadModel(url) {
+function clearModelGroup() {
+  while (modelGroup.children.length > 0) {
+    const child = modelGroup.children[0];
+    modelGroup.remove(child);
+    child.traverse((node) => {
+      if (node.isMesh) {
+        if (node.name !== 'outline') {
+          node.geometry.dispose();
+        }
+        if (Array.isArray(node.material)) {
+          node.material.forEach(m => { if (m && m.dispose) m.dispose(); });
+        } else if (node.material) {
+          if (node.material.dispose) node.material.dispose();
+        }
+      }
+    });
+  }
+
+  if (mixer) {
+    mixer.stopAllAction();
+    mixer = null;
+    const animSelect = document.getElementById('animation-select');
+    animSelect.innerHTML = '';
+    document.getElementById('animation-section').style.display = 'none';
+  }
+}
+
+function loadModel(url, isBackup) {
   const loader = new GLTFLoader();
   const statusEl = document.getElementById('loader-status');
   const progressBarEl = document.getElementById('progress-bar');
   const progressTextEl = document.getElementById('progress-text');
 
+  if (isBackup === undefined) {
+    isBackup = url.includes('backup1');
+  }
+
+  const loadingOverlay = document.getElementById('loading-overlay');
+  progressBarEl.style.width = '0%';
+  progressTextEl.innerText = '0%';
+  statusEl.innerText = 'Đang kết nối và tải file mô hình 3D...';
+  loadingOverlay.style.opacity = '1';
+  loadingOverlay.style.display = 'flex';
+
   loader.load(
     url,
     (gltf) => {
+      clearModelGroup();
+
       mainModel = gltf.scene;
       modelGroup.add(mainModel);
 
@@ -270,35 +313,43 @@ function loadModel(url) {
       mainModel.traverse((child) => {
         if (child.isMesh) {
           const meshName = (child.name || '').toLowerCase();
-          const mats = Array.isArray(child.material) ? child.material : [child.material];
-          const hasEyeOrBrowMat = mats.some(m => {
-            if (!m) return false;
-            const name = (m.name || '').toLowerCase();
-            return name.includes('eye') || name.includes('brow') || name.includes('lash');
-          });
-          const isEyeOrBrow = hasEyeOrBrowMat || meshName.includes('eye') || meshName.includes('brow') || meshName.includes('lash');
+          
+          if (isBackup) {
+            const mats = Array.isArray(child.material) ? child.material : [child.material];
+            const hasEyeOrBrowMat = mats.some(m => {
+              if (!m) return false;
+              const name = (m.name || '').toLowerCase();
+              return name.includes('eye') || name.includes('brow') || name.includes('lash');
+            });
+            const isEyeOrBrow = hasEyeOrBrowMat || meshName.includes('eye') || meshName.includes('brow') || meshName.includes('lash');
 
-          child.userData.isEyeOrBrow = isEyeOrBrow;
+            child.userData.isEyeOrBrow = isEyeOrBrow;
 
-          if (isEyeOrBrow) {
-            child.castShadow = false;
-            child.receiveShadow = false;
+            if (isEyeOrBrow) {
+              child.castShadow = false;
+              child.receiveShadow = false;
+            } else {
+              child.castShadow = !settings.wireframe;
+              child.receiveShadow = !settings.wireframe;
+            }
+
+            if (Array.isArray(child.material)) {
+              child.material = child.material.map(mat => fixMaterial(mat, child));
+            } else if (child.material) {
+              child.material = fixMaterial(child.material, child);
+            }
           } else {
             child.castShadow = !settings.wireframe;
             child.receiveShadow = !settings.wireframe;
-          }
-
-          if (Array.isArray(child.material)) {
-            child.material = child.material.map(mat => fixMaterial(mat, child));
-          } else if (child.material) {
-            child.material = fixMaterial(child.material, child);
           }
 
           meshes.push(child);
         }
       });
 
-      meshes.forEach(createOutline);
+      if (isBackup) {
+        meshes.forEach(createOutline);
+      }
 
       mainModel.traverse((child) => {
         if (child.isMesh && child.name !== 'outline' && child.geometry) {
@@ -360,10 +411,17 @@ function loadModel(url) {
       document.getElementById('stat-vertices').innerText = verticesCount.toLocaleString();
       document.getElementById('stat-bounds').innerText = `${size.x.toFixed(2)}m x ${size.y.toFixed(2)}m x ${size.z.toFixed(2)}m`;
 
+      if (url.startsWith('blob:')) {
+        document.querySelector('.file-name').innerText = customModelName || 'custom.glb';
+      } else {
+        document.querySelector('.file-name').innerText = url.split('/').pop();
+      }
+
       animations = gltf.animations;
       if (animations && animations.length > 0) {
         mixer = new THREE.AnimationMixer(mainModel);
         const animSelect = document.getElementById('animation-select');
+        animSelect.innerHTML = '';
 
         animations.forEach((clip, index) => {
           const option = document.createElement('option');
@@ -607,46 +665,19 @@ function getIconSVGPath(name) {
 }
 
 function loadLocalFile(file) {
-  document.querySelector('.file-name').innerText = file.name;
-
-  const loadingOverlay = document.getElementById('loading-overlay');
-  const progressBarEl = document.getElementById('progress-bar');
-  const progressTextEl = document.getElementById('progress-text');
-  const statusEl = document.getElementById('loader-status');
-
-  progressBarEl.style.width = '0%';
-  progressTextEl.innerText = '0%';
-  statusEl.innerText = 'Đang đọc file cục bộ...';
-
-  loadingOverlay.style.opacity = '1';
-  loadingOverlay.style.display = 'flex';
-
-  if (mainModel) {
-    modelGroup.remove(mainModel);
-    mainModel.traverse((child) => {
-      if (child.isMesh) {
-        if (child.name !== 'outline') {
-          child.geometry.dispose();
-        }
-        if (Array.isArray(child.material)) {
-          child.material.forEach(m => { if (m && m.dispose) m.dispose(); });
-        } else if (child.material) {
-          if (child.material.dispose) child.material.dispose();
-        }
-      }
-    });
+  if (customModelUrl) {
+    URL.revokeObjectURL(customModelUrl);
   }
+  customModelUrl = URL.createObjectURL(file);
+  customModelName = file.name;
 
-  if (mixer) {
-    mixer.stopAllAction();
-    mixer = null;
-    const animSelect = document.getElementById('animation-select');
-    animSelect.innerHTML = '';
-    document.getElementById('animation-section').style.display = 'none';
-  }
+  const modelSelect = document.getElementById('model-select');
+  const customOption = modelSelect.querySelector('option[value="custom"]');
+  customOption.disabled = false;
+  customOption.text = `Mô hình của tôi (${customModelName})`;
+  modelSelect.value = "custom";
 
-  const url = URL.createObjectURL(file);
-  loadModel(url);
+  loadModel(customModelUrl, true);
 }
 
 function setupUI() {
@@ -665,26 +696,24 @@ function setupUI() {
   const toggleWireframe = document.getElementById('toggle-wireframe');
   toggleWireframe.addEventListener('change', (e) => {
     settings.wireframe = e.target.checked;
-    if (mainModel) {
-      mainModel.traverse((child) => {
-        if (child.isMesh) {
-          if (child.name !== 'outline') {
-            const mats = Array.isArray(child.material) ? child.material : [child.material];
-            mats.forEach(m => { if (m) m.wireframe = settings.wireframe; });
+    modelGroup.traverse((child) => {
+      if (child.isMesh) {
+        if (child.name !== 'outline') {
+          const mats = Array.isArray(child.material) ? child.material : [child.material];
+          mats.forEach(m => { if (m) m.wireframe = settings.wireframe; });
 
-            if (child.userData.isEyeOrBrow) {
-              child.castShadow = false;
-              child.receiveShadow = false;
-            } else {
-              child.castShadow = !settings.wireframe;
-              child.receiveShadow = !settings.wireframe;
-            }
+          if (child.userData.isEyeOrBrow) {
+            child.castShadow = false;
+            child.receiveShadow = false;
           } else {
-            child.visible = !settings.wireframe;
+            child.castShadow = !settings.wireframe;
+            child.receiveShadow = !settings.wireframe;
           }
+        } else {
+          child.visible = !settings.wireframe;
         }
-      });
-    }
+      }
+    });
   });
 
   const toggleGrid = document.getElementById('toggle-grid');
@@ -872,6 +901,18 @@ function setupUI() {
       document.body.style.userSelect = '';
     }
   });
+
+  const modelSelect = document.getElementById('model-select');
+  modelSelect.addEventListener('change', (e) => {
+    const val = e.target.value;
+    if (val === 'backup1') {
+      loadModel('./backup1.glb', true);
+    } else if (val === 'autosave') {
+      loadModel('./autosave2_10632_autosave.glb', false);
+    } else if (val === 'custom' && customModelUrl) {
+      loadModel(customModelUrl, true);
+    }
+  });
 }
 
 function onWindowResize() {
@@ -924,18 +965,16 @@ function animateCameraTo(position, target) {
 function getFaceFocusParameters() {
   let targetMesh = null;
 
-  if (mainModel) {
-    mainModel.traverse((child) => {
-      if (child.isMesh && child.name !== 'outline') {
-        const name = child.name.toLowerCase();
-        if (name.includes('head') || name.includes('face') || name.includes('eye') || name.includes('cheek') || name.includes('nose')) {
-          if (!targetMesh || name.includes('head') || name.includes('face')) {
-            targetMesh = child;
-          }
+  modelGroup.traverse((child) => {
+    if (child.isMesh && child.name !== 'outline') {
+      const name = child.name.toLowerCase();
+      if (name.includes('head') || name.includes('face') || name.includes('eye') || name.includes('cheek') || name.includes('nose')) {
+        if (!targetMesh || name.includes('head') || name.includes('face')) {
+          targetMesh = child;
         }
       }
-    });
-  }
+    }
+  });
 
   const focusTarget = new THREE.Vector3();
   let focusDistance = modelMaxDim * 0.5;

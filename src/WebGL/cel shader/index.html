@@ -26,7 +26,7 @@
         <div class="spinner-inner"></div>
       </div>
       <h2 class="loader-title">ĐANG TẢI MÔ HÌNH 3D</h2>
-      <p class="loader-subtitle" id="loader-status">Đang kết nối và tải file backup1.glb...</p>
+      <p class="loader-subtitle" id="loader-status">Đang kết nối và tải các mô hình 3D...</p>
       <div class="progress-bar-container">
         <div class="progress-bar" id="progress-bar"></div>
       </div>
@@ -42,13 +42,33 @@
         <i data-lucide="box" class="icon-accent"></i>
         <div>
           <h1>3D GLB Viewer</h1>
-          <span class="file-name">backup1.glb</span>
+          <span class="file-name">Đang tải mô hình...</span>
         </div>
       </div>
     </header>
 
     <!-- Scrollable Control Panel Area -->
     <div class="dashboard-body">
+      <!-- Section: Select Model -->
+      <section class="control-section">
+        <!-- for backup1.glb, autosave2_10632_autosave.glb and custom.glb-->
+        <h3 class="section-title">
+          <i data-lucide="box"></i>
+          Chọn mô hình hiển thị
+        </h3>
+        <div class="control-group">
+          <div class="control-row-col">
+            <div class="custom-select-wrapper">
+              <select id="model-select" class="styled-select">
+                <option value="backup1">my model 1 (backup1)</option>
+                <option value="autosave" selected>my model 2 (autosave2_10632_autosave.glb)</option>
+                <option value="custom" disabled>my model 3 (uploading...)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- Section: Load Model -->
       <section class="control-section">
         <h3 class="section-title">
